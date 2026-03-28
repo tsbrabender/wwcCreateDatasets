@@ -1,0 +1,253 @@
+# LLM Training Data Generator - Configuration Template
+# Copy this file to config.yaml and customize for your needs
+
+# ============================================================================
+# DATA SOURCES
+# ============================================================================
+# Define where to scrape training content from
+# 
+# Supported scrape_type values:
+#   - 'web': HTML web pages (use CSS selectors for content)
+#   - 'pdf': PDF documents (text extraction)
+#   - 'api': RESTful API endpoints (returns JSON)
+
+sources:
+  # Example 1: Web scraping with CSS selector
+  - name: "Example Documentation"
+    url: "https://docs.example.com"
+    scrape_type: "web"
+    content_selector: "main"  # CSS selector for content area
+    
+    # EXCLUDE REPETITIVE ELEMENTS (optional):
+    # Specify CSS selectors for headers, footers, navigation, etc. that appear
+    # on every page. These will be removed before saving scraped content,
+    # reducing redundancy in training data.
+    exclude_selectors:
+      - "header"              # Remove header elements
+      - "footer"              # Remove footer elements
+      - "nav"                 # Remove navigation
+      - ".sidebar"            # Remove sidebar
+      - ".breadcrumb"         # Remove breadcrumbs
+      - ".advertisement"      # Remove ads
+    
+    # Common CSS selectors:
+    # "main" - Main content area
+    # "article" - Article content
+    # ".container" - Elements with class 'container'
+    # "#content" - Element with id 'content'
+    # "div.post-body" - Div with class 'post-body'
+    
+    # Recursive crawling options (optional):
+    # recursive: true              # Enable recursive link following (default: true)
+    # crawl_depth: 3               # How many levels deep to crawl (default: 3)
+    # Example with recursive crawling:
+    # recursive: true
+    # crawl_depth: 2               # Crawl up to 2 levels deep
+  
+  # Example 1b: Entire website with recursive crawling
+  # - name: "Full Documentation Site"
+  #   url: "https://docs.example.com"
+  #   scrape_type: "web"
+  #   content_selector: "main"
+  #   exclude_selectors:
+  #     - "header"
+  #     - "footer"
+  #     - ".sidebar"
+  #   recursive: true           # Follow all links on same domain
+  #   crawl_depth: 3            # Up to 3 levels deep
+  
+  # Example 1c: Single page only (no recursive crawling)
+  # - name: "Single Page Only"
+  #   url: "https://example.com/specific-page"
+  #   scrape_type: "web"
+  #   content_selector: "article"
+  #   exclude_selectors:
+  #     - "header"
+  #     - "footer"
+  #   recursive: false          # Don't follow links
+    
+  # Example 2: PDF document
+  # - name: "Tutorial PDF"
+  #   url: "https://example.com/tutorial.pdf"
+  #   scrape_type: "pdf"
+  
+  # Example 3: API endpoint
+  # - name: "API Documentation"
+  #   url: "https://api.example.com/v1/docs"
+  #   scrape_type: "api"
+
+# ============================================================================
+# LLM CONFIGURATION
+# ============================================================================
+# Configure the LLM provider for content transformation
+#
+# Providers:
+#   - openai: OpenAI GPT models (requires API key)
+#   - anthropic: Anthropic Claude models (requires API key)
+#   - ollama: Local/self-hosted models via Ollama
+#   - local: Local models (same as ollama)
+
+llm:
+  # OpenAI configuration (uncomment to use)
+  provider: "openai"
+  model: "gpt-3.5-turbo"
+  api_key: "${OPENAI_API_KEY}"
+  temperature: 0.7
+  
+  # Alternative: Anthropic Claude (uncomment to use)
+  # provider: "anthropic"
+  # model: "claude-3-sonnet-20240229"
+  # api_key: "${ANTHROPIC_API_KEY}"
+  
+  # Alternative: Local Ollama (uncomment to use)
+  # provider: "ollama"
+  # model: "mistral"
+  # host: "http://localhost:11434"
+  # Note: Start Ollama service first with: ollama serve
+  
+  # OpenAI Models:
+  #   - gpt-3.5-turbo    (fast, cheap)
+  #   - gpt-4            (powerful, expensive)
+  #   - gpt-4-turbo      (balanced)
+  #   - gpt-4o           (latest)
+  
+  # Anthropic Models:
+  #   - claude-3-haiku-20240307       (fast, cheap)
+  #   - claude-3-sonnet-20240229      (balanced)
+  #   - claude-3-opus-20240229        (most capable)
+  
+  # Ollama Models (pull first: ollama pull <model>):
+  #   - llama2           (popular, good quality)
+  #   - mistral          (fast, good quality)
+  #   - neural-chat      (optimized for chat)
+  #   - dolphin-mixtral  (creative, detailed)
+
+# ============================================================================
+# OUTPUT CONFIGURATION
+# ============================================================================
+
+output:
+  format: "jsonl"           # Output format (only 'jsonl' currently supported)
+  include_metadata: true    # Include source metadata in output
+
+# ============================================================================
+# PROCESSING CONFIGURATION
+# ============================================================================
+
+processing:
+  chunk_size: 2000          # Content chunk size for LLM processing
+  batch_size: 16            # Batch size for LLM processing
+  workers: 2                # Concurrent workers for web scraping
+  
+  # Tuning guidelines:
+  # - chunk_size: Larger = fewer API calls but may hit token limits
+  #   Typical range: 1000-3000 characters
+  # - batch_size: Larger = faster but more memory usage
+  #   Typical range: 8-32
+  # - workers: More = faster scraping but may hit rate limits
+  #   Typical range: 2-4
+  
+  # Global recursive crawl settings:
+  # crawl_depth: 3          # Default crawl depth for recursive sources
+  # crawl_delay: 0.5        # Delay between requests (seconds) - be respectful to servers
+  # max_pages: "max"        # Maximum pages to crawl per source ("max" = unlimited, -1 = unlimited, or specify number like 100)
+
+# ============================================================================
+# EXAMPLES OF COMPLETE CONFIGURATIONS
+# ============================================================================
+
+# Example 1: Blog to training data with OpenAI
+# ---
+# sources:
+#   - name: "Tech Blog"
+#     url: "https://blog.example.com"
+#     scrape_type: "web"
+#     content_selector: "article.post"
+# 
+# llm:
+#   provider: "openai"
+#   model: "gpt-3.5-turbo"
+#   api_key: "${OPENAI_API_KEY}"
+
+# Example 2: Academic papers (PDFs) with local Ollama
+# ---
+# sources:
+#   - name: "Research Paper 1"
+#     url: "https://arxiv.org/pdf/2301.12345.pdf"
+#     scrape_type: "pdf"
+#   - name: "Research Paper 2"
+#     url: "https://arxiv.org/pdf/2302.54321.pdf"
+#     scrape_type: "pdf"
+# 
+# llm:
+#   provider: "ollama"
+#   model: "mistral"
+#   host: "http://localhost:11434"
+
+# Example 3: Documentation site with Claude
+# ---
+# sources:
+#   - name: "Framework Documentation"
+#     url: "https://docs.framework.com"
+#     scrape_type: "web"
+#     content_selector: "main.documentation"
+# 
+# llm:
+#   provider: "anthropic"
+#   model: "claude-3-sonnet-20240229"
+#   api_key: "${ANTHROPIC_API_KEY}"
+
+# ============================================================================
+# NOTES
+# ============================================================================
+#
+# 1. Environment Variables:
+#    Use format: ${VARIABLE_NAME}
+#    Set before running: export OPENAI_API_KEY="sk-..."
+#
+# 2. CSS Selectors:
+#    Inspect website with browser (F12), find content element
+#    Test in browser console: document.querySelectorAll('selector')
+#
+# 3. Recursive Crawling (full-website scraping):
+#    By default, sources use recursive=true with crawl_depth=3:
+#    - All links on the same domain are followed
+#    - Crawling stops at specified depth level
+#    - External links are automatically filtered out
+#    - URL deduplication prevents duplicate processing
+#    - Rate limiting respects target servers
+#    
+#    To scrape only a single page:
+#      recursive: false
+#    
+#    To crawl deeper (more pages):
+#      crawl_depth: 5  (default is 3)
+#    
+#    Crawl depth examples:
+#    - depth 1: Only root page
+#    - depth 2: Root + all links from root
+#    - depth 3: Root + links from all level-2 pages + links from level-2 pages
+#    
+#    Output files:
+#    - Each crawled page gets a unique file with URL hash: source_web_abc12345.json
+#    - Improves when debugging and analyzing specific pages
+#
+# 4. Local LLM Setup:
+#    - Install: https://ollama.ai/download
+#    - Start service: ollama serve
+#    - Pull model: ollama pull mistral
+#    - In another terminal, run: python main.py --config config.yaml
+#
+# 5. Rate Limiting:
+#    - For recursive crawling, crawl_delay adds delays between requests
+#    - Default 0.5 seconds between requests (respectful crawling)
+#    - Reduce workers if hitting API rate limits
+#    - Use smaller batch_size if getting throttled
+#    - Local Ollama has no rate limits
+#
+# 6. Cost Estimation:
+#    - OpenAI: ~$0.50-$1.00 per 1M tokens
+#    - Anthropic: ~$3-$60 per 1M tokens
+#    - Ollama: Free (local)
+
+# ============================================================================
